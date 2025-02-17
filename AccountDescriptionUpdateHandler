@@ -1,0 +1,38 @@
+public class AccountDescriptionUpdateHandler {
+
+     public static void updateoppName(List<Opportunity> oppList, Map<Id, Opportunity> mapoldOpp) {
+                Set<Id> accIds = new Set<Id>(); 
+
+                for (Opportunity newopp : oppList) {
+                        if (mapoldOpp != null) { // after update 
+                                if (mapoldOpp.get(newopp.Id).Amount != newopp.Amount) {
+                                        accIds.add(newopp.AccountId);
+                                }
+                        } else {
+                                accIds.add(newopp.AccountId); // after insert 
+                        }
+                }
+
+                if (accIds.size() > 0) {
+                        Map<Id, Opportunity> mapfindmaxAmt = new Map<Id, Opportunity>();
+                        for (Opportunity opp : [SELECT Id, Name, AccountId, Amount FROM Opportunity WHERE AccountId = :accIds ORDER BY Amount DESC]) {
+                                if(opp.Amount != Null && !mapfindmaxAmt.containsKey(opp.AccountId)) {
+                                    mapfindmaxAmt.put(opp.AccountId, opp);
+                                }
+                        }
+
+                        List<Account> acctoUpdate = new List<Account>();
+                        for (Id accountId : mapfindmaxAmt.keySet()) {
+                                Opportunity getoppName = mapfindmaxAmt.get(accountId);
+                                Account acc = new Account();
+                                acc.Id = getoppName.AccountId;
+                                acc.Description = getoppName.Name;
+                                acctoUpdate.add(acc);
+                        }
+
+                        if (acctoUpdate.size() > 0) {
+                                update acctoUpdate;
+                        }
+                }
+        }
+}
